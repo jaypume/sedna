@@ -1,60 +1,42 @@
-import asyncio
 import os
+import numpy as np
+import keras.preprocessing.image as img_preprocessing
+from interface import NetWork
 
-from torchvision.datasets import MNIST
-from torchvision.transforms import ToTensor
+from sedna.common.config import Context
+from sedna.algorithms.data_process import TxtDataParse
 
-# 参数已经
-
-from plato.clients import simple # client用户不感知
-from plato.datasources import base  #sedna.dataset
-from plato.config import Config
-
-from .network import model, Trainer
+from sedna.core.federated_learning import FederatedLearning
+from .estimator import MyEstimator
 
 
-class DataSource(base.DataSource):
-    """A custom datasource with custom training and validation
-       datasets.
-    """
-
-    def __init__(self):  #   plato,sedna 都是来自于pytorch/tensorflow原生的dataset对象，不冲突。
-        # 用户使用自己
-        # 如果dataset有通用的方法，比如image2numpy，sedna.dataset是否要规范输出为trainset=x,y?
-        super().__init__()
-
-        self.trainset = MNIST("./data",
-                              train=True,
-                              download=True,
-                              transform=ToTensor())
-        self.testset = MNIST("./data",
-                             train=False,
-                             download=True,
-                             transform=ToTensor())
-
-
-class Myclient(simple.Client):
-    def __init__(self, model=None, datasource=None, trainer=None):
-        super().__init__(model, datasource, trainer)
+def image_process(line):
+    file_path, label = line.split(',')
+    original_dataset_url = Context.get_parameters('original_dataset_url')
+    root_path = os.path.dirname(original_dataset_url)
+    file_path = os.path.join(root_path, file_path)
+    img = img_preprocessing.load_img(file_path).resize((128, 128))
+    data = img_preprocessing.img_to_array(img) / 255.0
+    label = [0, 1] if int(label) == 0 else [1, 0]
+    data = np.array(data)
+    label = np.array(label)
+    return [data, label]
 
 
 def main():
-    Config().args.id = int(Config().args.id)
-    Config().args.port = int(Config().args.port)
+    fl_instance = FederatedLearning(estimator=MyEstimator)
 
-    loop = asyncio.get_event_loop()
-    coroutines = []
+    # load dataset.
+    train_data = TxtDataParse(func=image_process)(
+        fl_instance.config.train_dataset_url
+    )
+    x = np.array([tup[0] for tup in train_data])
+    y = np.array([tup[1] for tup in train_data])
 
-    datasource = DataSource()
-    trainer = Trainer(model=model)
-    loss=xx
-    Interface(trainer, loss, metrics, optimizal)
-    client = Myclient(model=model, datasource=datasource, trainer=trainer, ) # 用户看不到，client这边暴露上传下载权重的接口，可能是websocket的，sedna来实现。
-    client.configure()
-    client.run()
-    # coroutines.append(client.start_client())
-    # loop.run_until_complete(asyncio.gather(*coroutines))
+    fl_instance.initial()
+    fl_instance.train(x, y, fed_alg='')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
+

@@ -1,24 +1,13 @@
-import os
-
-import torch
 from torch import nn
+import torch
 
-# 接口变动：不需要写这句话， 配置参数通过CRD配置好了，并且在lib库后端传递到函数中。
-# 实现方式：
-#  1. 在lib库中把CRD翻译成server.yml；
-#  2. 把CRD中字段翻译成环境变量，通过环境变量注入到Plato中。
-
-from plato.trainers import basic
+from sedna.federated_learning_new import interface
 
 
-# model 和 trainer 合并成一个对象，和现有lib库一致
+class MyEstimator(interface.Estimator):
+    """A custom estimator with custom training and testing loops. """
 
-
-
-class Trainer(basic.Trainer):
-    """A custom trainer with custom training and testing loops. """
-
-    def build():        
+    def build(self):
         model = nn.Sequential(
             nn.Linear(28 * 28, 128),
             nn.ReLU(),
@@ -28,7 +17,7 @@ class Trainer(basic.Trainer):
         )
         return model
 
-    def train_model(self, config, trainset, sampler, cut_layer=None):  # pylint: disable=unused-argument
+    def train(self, config, trainset, sampler, cut_layer=None):  # pylint: disable=unused-argument
         """A custom training loop. """
         optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-3)
         criterion = nn.CrossEntropyLoss()
@@ -52,7 +41,7 @@ class Trainer(basic.Trainer):
                 optimizer.step()
                 optimizer.zero_grad()
 
-    def test_model(self, config, testset):  # pylint: disable=unused-argument
+    def test(self, config, testset):  # pylint: disable=unused-argument
         """A custom testing loop. """
         test_loader = torch.utils.data.DataLoader(
             testset, batch_size=config['batch_size'], shuffle=False)
@@ -73,10 +62,3 @@ class Trainer(basic.Trainer):
 
         accuracy = correct / total
         return accuracy
-
-    
-    def get_weights(self):
-        return self.model.get_weights()
-
-    def set_weights(self):
-        return self.model.get_weights()

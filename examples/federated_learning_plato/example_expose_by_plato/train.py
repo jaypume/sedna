@@ -4,13 +4,13 @@ import os
 from torchvision.datasets import MNIST
 from torchvision.transforms import ToTensor
 
-os.environ['config_file'] = 'examples/demo/client.yml'
+# 参数已经
 
-from plato.clients import simple
-from plato.datasources import base
+from plato.clients import simple # client用户不感知
+from plato.datasources import base  #sedna.dataset
 from plato.config import Config
 
-from .network import model, Trainer
+from .estimator import model, Trainer
 
 
 class DataSource(base.DataSource):
@@ -47,6 +47,7 @@ def main():
 
     datasource = DataSource()
     trainer = Trainer(model=model)
+    Interface(trainer, loss, metrics, optimizal)
     client = Myclient(model=model, datasource=datasource, trainer=trainer, ) # 用户看不到，client这边暴露上传下载权重的接口，可能是websocket的，sedna来实现。
     client.configure()
     client.run()

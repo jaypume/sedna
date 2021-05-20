@@ -3,24 +3,30 @@ import os
 import torch
 from torch import nn
 
-os.environ['config_file'] = 'examples/demo/server.yml'
+# 接口变动：不需要写这句话， 配置参数通过CRD配置好了，并且在lib库后端传递到函数中。
+# 实现方式：
+#  1. 在lib库中把CRD翻译成server.yml；
+#  2. 把CRD中字段翻译成环境变量，通过环境变量注入到Plato中。
 
 from plato.trainers import basic
 
 
+# model 和 trainer 合并成一个对象，和现有lib库一致
 
 
-model = nn.Sequential(
-    nn.Linear(28 * 28, 128),
-    nn.ReLU(),
-    nn.Linear(128, 128),
-    nn.ReLU(),
-    nn.Linear(128, 10),
-)
 
-
-class Trainer(basic.Trainer):
+class Estimator(basic.Trainer):
     """A custom trainer with custom training and testing loops. """
+
+    def build():
+        model = nn.Sequential(
+            nn.Linear(28 * 28, 128),
+            nn.ReLU(),
+            nn.Linear(128, 128),
+            nn.ReLU(),
+            nn.Linear(128, 10),
+        )
+        return model
 
     def train_model(self, config, trainset, sampler, cut_layer=None):  # pylint: disable=unused-argument
         """A custom training loop. """
@@ -67,3 +73,10 @@ class Trainer(basic.Trainer):
 
         accuracy = correct / total
         return accuracy
+
+
+    def get_weights(self):
+        return self.model.get_weights()
+
+    def set_weights(self):
+        return self.model.get_weights()

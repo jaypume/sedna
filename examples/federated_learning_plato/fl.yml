@@ -16,7 +16,7 @@ spec:
             env: # user defined environments
               - name: "exit_round"
                 value: "3"
-            resources:  # user defined resources
+            resources: # user defined resources
               limits:
                 memory: 2Gi
   trainingWorkers:
@@ -27,9 +27,9 @@ spec:
           nodeName: $EDGE1_NODE
           containers:
             - image: kubeedge/sedna-example-federated-learning-surface-defect-detection-train:v0.1.0
-              name:  train-worker
+              name: train-worker
               imagePullPolicy: IfNotPresent
-              env:  # user defined environments
+              env: # user defined environments
                 - name: "batch_size"
                   value: "32"
                 - name: "learning_rate"
@@ -46,15 +46,15 @@ spec:
           nodeName: $EDGE2_NODE
           containers:
             - image: kubeedge/sedna-example-federated-learning-surface-defect-detection-train:v0.1.0
-              name:  train-worker
+              name: train-worker
               imagePullPolicy: IfNotPresent
-              env:  # user defined environments
+              env: # user defined environments
                 - name: "batch_size"
                   value: "32"
                 - name: "learning_rate"
                   value: "0.001"
                 - name: "epochs"
                   value: "2"
-              resources:  # user defined resources
+              resources: # user defined resources
                 limits:
                   memory: 2Gi

@@ -5,12 +5,21 @@ metadata:
 spec:
   stopCondition:  # 被认为是联邦任务的参数，还是聚合算法的参数比较好？
     # 类似trigger的写法
-    rounds: 100
-    targetAccuracy: 0.95
-    deltaLoss: 0.1
+    condition:
+      operator: ">"
+      threshold: 100
+      metric: round
+    condition:
+      operator: "<"
+      threshold: 0.1
+      metric: deltaLoss
+    condition:
+      operator: ">"
+      threshold: 0.95
+      metric: targetAccuracy
     # 是什么关系？并列还是
     # 要解释这个和原来版本的关系：替换升级了，版本号变化了
-  aggregationProtocol:
+  transmitter: / Transmitter
     name: "mistnet" # 可配置的协议有：simple, adaptive_freezing, ...
     parameters:
       - name: "cut_layer"
@@ -31,7 +40,7 @@ spec:
             name: agg-worker
             imagePullPolicy: IfNotPresent
             env: # user defined environments
-              - name: "exit_round"  #看看是否有其他的超参数。
+              - name: "exit_round"  
                 value: "3"
             resources: # user defined resources
               limits:
@@ -39,7 +48,6 @@ spec:
   trainingWorkers:
     - dataset:
         name: "edge1-surface-defect-detection-dataset"
-
       template:
         spec:
           nodeName: $EDGE1_NODE
@@ -57,7 +65,7 @@ spec:
                 - name: "weight_decay"
                   value: "0.01"
                 - name: "device" #plato会感知的参数，并不是用户自定义的参数， 待考虑是否要放在这里
-                  value: "1"  #sedna是否会用这个参数，不用到的就放这里。
+                  value: "GPU"  #sedna是否会用这个参数，不用到的就放这里。
               resources: # user defined resources
                 limits:
                   memory: 2Gi
@@ -80,4 +88,3 @@ spec:
               resources: # user defined resources
                 limits:
                   memory: 2Gi
-

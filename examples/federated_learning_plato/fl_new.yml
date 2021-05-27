@@ -1,0 +1,90 @@
+apiVersion: sedna.io/v1alpha2
+kind: FederatedLearningJob
+metadata:
+  name: surface-defect-detection
+spec:
+  stopCondition:  # 被认为是联邦任务的参数，还是聚合算法的参数比较好？
+    # 类似trigger的写法
+    condition:
+      operator: ">"
+      threshold: 100
+      metric: round
+    condition:
+      operator: "<"
+      threshold: 0.1
+      metric: deltaLoss
+    condition:
+      operator: ">"
+      threshold: 0.95
+      metric: targetAccuracy
+    # 是什么关系？并列还是
+    # 要解释这个和原来版本的关系：替换升级了，版本号变化了
+  transmitter: / Transmitter
+    name: "mistnet" # 可配置的协议有：simple, adaptive_freezing, ...
+    parameters:
+      - name: "cut_layer"
+        value: "layer1"
+      - name: ""
+        value: "http"
+  aggregationWorker:
+    model:
+      name: "surface-defect-detection-model"
+    template:
+      spec:
+        nodeName: $CLOUD_NODE
+        containers:
+          - image: kubeedge/image-sedna-provide
+            # 聚合worker有两类镜像：
+            # 1.Sedna提供默认的镜像，包含了已经集成的聚合算法和协议；
+            # 2.用户基于Sedna提供的接口扩展的接口，需要自己打包好镜像。
+            name: agg-worker
+            imagePullPolicy: IfNotPresent
+            env: # user defined environments
+              - name: "exit_round"  
+                value: "3"
+            resources: # user defined resources
+              limits:
+                memory: 2Gi
+  trainingWorkers:
+    - dataset:
+        name: "edge1-surface-defect-detection-dataset"
+      template:
+        spec:
+          nodeName: $EDGE1_NODE
+          containers:
+            - image: kubeedge/sedna-example-federated-learning-surface-defect-detection-train:v0.1.0
+              name: train-worker
+              imagePullPolicy: IfNotPresent
+              env: # user defined environments
+                - name: "batch_size"
+                  value: "32"
+                - name: "learning_rate"
+                  value: "0.001"
+                - name: "epochs"
+                  value: "2"
+                - name: "weight_decay"
+                  value: "0.01"
+                - name: "device" #plato会感知的参数，并不是用户自定义的参数， 待考虑是否要放在这里
+                  value: "GPU"  #sedna是否会用这个参数，不用到的就放这里。
+              resources: # user defined resources
+                limits:
+                  memory: 2Gi
+    - dataset:
+        name: "edge2-surface-defect-detection-dataset"
+      template:
+        spec:
+          nodeName: $EDGE2_NODE
+          containers:
+            - image: kubeedge/sedna-example-federated-learning-surface-defect-detection-train:v0.1.0
+              name: train-worker
+              imagePullPolicy: IfNotPresent
+              env: # user defined environments
+                - name: "batch_size"
+                  value: "32"
+                - name: "learning_rate"
+                  value: "0.001"
+                - name: "epochs"
+                  value: "2"
+              resources: # user defined resources
+                limits:
+                  memory: 2Gi

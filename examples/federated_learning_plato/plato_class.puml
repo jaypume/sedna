@@ -1,0 +1,67 @@
+@startuml
+
+abstract Algorithm {
+    +Trainer trainer
+'    +Model trainer.model
+    int client_id
+    ----
+    extract_weights()
+    load_weights()
+}
+
+
+abstract Client {
+    +Trainer trainer
+'    +Model trainer.model
+    int client_id
+    ----
+    - void start_client() #start train的意思
+    List recv()
+    void send()
+    - void process_server_response() # start_client内部调用的，把数据load在模型中，进行下一轮训练
+    - void configure()
+    - void load_data() #从data source load
+    - void load_payload() #模型，内部调用
+    void train() # 调用trainer做训练，被内部调用
+}
+
+abstract Server {
+    +List<Client> clients
+    ----
+    - void run() ➖表示模拟相关
+    - void register_client()
+    - void unregister_client()
+    - void start_client()
+    void close_connections()
+    void select_clients()
+    void send()
+    - void serve() 在run的函数内调用，通信
+    void recv()
+    - void wrap_up()
+    void close()
+    void customize_server_response()
+
+    -void configure()
+    -void choose_clients()
+    -void is_valid_server_type()
+}
+
+abstract Trainer {
+    int client_id
+    +Model model
+    ----
+    -void save_accuracy() ' 记录
+    -void load_accuracy()  ' 读取
+    -void start_training() ' 做模拟用的
+    -void stop_training() ' 做模拟用的，GPU中模拟10个worker，
+    void train()
+    void test()  #
+}
+
+Algorithm --> Trainer
+Server --> Client
+Client --> Trainer
+
+'
+
+@enduml

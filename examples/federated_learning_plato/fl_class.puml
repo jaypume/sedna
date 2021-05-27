@@ -1,0 +1,34 @@
+@startuml
+
+abstract Trainer {
+Model model
+----
+void train()  #TODO：调研联邦学习可以传输什么东西， #网络结构可能是什么样子的
+void eval()
+void test()
+predict()
+}
+abstract Aggregator {
+
+----
+void aggregate()
+void exit_check() #TODO: 调研exit_check函数都有哪些？
+}
+
+
+abstract Transmitter {
+----
+void send()  #TODO： 压缩算法可以放在哪里？
+void recv()
+}
+
+
+abstract CompressTransmitter {
+----
+void compress()
+void extract()
+void send()
+void recv()
+}
+
+@enduml

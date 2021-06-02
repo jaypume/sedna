@@ -20,6 +20,8 @@ from copy import deepcopy
 import numpy as np
 
 from sedna.common.class_factory import ClassFactory, ClassType
+from .client_choose import ClientChooseAggregator
+from .fedavg import FedAvgAggregator
 
 __all__ = ('FedAvg',)
 

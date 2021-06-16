@@ -1,28 +1,27 @@
+import abc
+from copy import deepcopy
+
 import numpy as np
 
-from .base import Aggregator
+from sedna.common.class_factory import ClassFactory, ClassType
+from .base import BaseAggregation
+
+__all__ = ('FedAvg',)
 
 
-class FedAvgAggregator(Aggregator):
-    def __init__(self):
-        super().__init__()
+@ClassFactory.register(ClassType.FL_AGG)
+class FedAvg(BaseAggregation, abc.ABC):
+    """Federated averaging algorithm"""
 
-    def aggregate(self):
-        new_weights = [
-            np.zeros(a.shape) for a
-            in next(iter(self.agg_data_dict.values())).flatten_weights]
-        total_size = sum([a.sample_count for a in self.agg_data_dict.values()])
-
-        for c in self.agg_data_dict.values():
-            for i in range(len(c.flatten_weights)):
-                old_weights = (
-                        np.array(
-                            c.flatten_weights[i]) * c.sample_count / total_size
-                )
-                new_weights[i] += old_weights
-
-        self.agg_data_dict_aggregated = self.agg_data_dict
-        self.agg_data_dict = {}
-
-        for _, d in self.agg_data_dict_aggregated.items():
-            d.flatten_weights = new_weights
+    def aggregate(self, weights, size=0):
+        total_sample = self.total_size + size
+        if not total_sample:
+            return self.weights
+        updates = []
+        for inx, weight in enumerate(weights):
+            old_weight = self.weights[inx]
+            row_weight = ((np.array(weight) - old_weight) *
+                          (size / total_sample) + old_weight)
+            updates.append(row_weight)
+        self.weights = deepcopy(updates)
+        return updates
